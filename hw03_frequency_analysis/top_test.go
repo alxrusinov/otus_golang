@@ -43,6 +43,15 @@ var text = `Как видите, он  спускается  по  лестни�
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
+var shortText = `Косил Косой косой косой`
+
+type testCase struct {
+	name        string
+	value       []*StringFrequency
+	num         int
+	expectedLen int
+}
+
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
@@ -79,4 +88,57 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func TestTop10ShortText(t *testing.T) {
+	expected := []string{
+		"косой", // 2
+		"Косил", // 1
+		"Косой", // 1
+	}
+	require.Equal(t, expected, Top10(shortText))
+}
+
+func TestTakeFirst(t *testing.T) {
+	cases := []testCase{
+		{
+			name: "num < len",
+			value: []*StringFrequency{
+				{Value: "one"},
+				{Value: "two"},
+				{Value: "three"},
+				{Value: "four"},
+			},
+			num:         2,
+			expectedLen: 2,
+		},
+		{
+			name: "num = len",
+			value: []*StringFrequency{
+				{Value: "one"},
+				{Value: "two"},
+				{Value: "three"},
+				{Value: "four"},
+			},
+			num:         4,
+			expectedLen: 4,
+		},
+		{
+			name: "num > len",
+			value: []*StringFrequency{
+				{Value: "one"},
+				{Value: "two"},
+				{Value: "three"},
+				{Value: "four"},
+			},
+			num:         10,
+			expectedLen: 4,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			require.Len(t, takeFirst(test.value, test.num), test.expectedLen)
+		})
+	}
 }
