@@ -10,12 +10,15 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
-func checkIsInValidString(str string) bool {
-	invStr, err := regexp.MatchString(`^\d|\d{2,}`, str)
-	if err != nil {
-		return true
-	}
-	return invStr
+var regexpPattern = `^\d|\d{2,}`
+
+func getRegexp(pattern string) (*regexp.Regexp, error) {
+	reg, err := regexp.Compile(pattern)
+	return reg, err
+}
+
+func checkIsInValidString(str string, match *regexp.Regexp) bool {
+	return match.MatchString(str)
 }
 
 func checkStringForEmpty(str string) bool {
@@ -27,12 +30,16 @@ func Unpack(value string) (string, error) {
 	runeSlice := []rune(value)
 	length := len(runeSlice)
 	goNext := false
+	matchString, err := getRegexp(regexpPattern)
+	if err != nil {
+		return "", err
+	}
 
 	if checkStringForEmpty(value) {
 		return "", nil
 	}
 
-	if checkIsInValidString(value) {
+	if checkIsInValidString(value, matchString) {
 		return "", ErrInvalidString
 	}
 
