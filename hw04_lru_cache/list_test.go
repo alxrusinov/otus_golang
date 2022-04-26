@@ -48,4 +48,16 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("remove nonexistent listItem", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10) // [10]
+		l.PushBack(20)  // [10, 20]
+		l.PushBack(30)  // [10, 20, 30]
+
+		item := &ListItem{12, nil, nil}
+		l.Remove(item) // [10, 30]
+		require.Equal(t, 3, l.Len())
+	})
 }
