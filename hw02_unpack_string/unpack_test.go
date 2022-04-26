@@ -43,3 +43,27 @@ func TestUnpackInvalidString(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRegexpValid(t *testing.T) {
+	validRegexp := []string{`^\d|\d{2,}`, `\d*'`}
+
+	for _, tc := range validRegexp {
+		tc := tc
+		t.Run(tc, func(t *testing.T) {
+			_, err := getRegexp(tc)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestGetRegexpInvalid(t *testing.T) {
+	inValidRegexp := []string{`\d{3,2}`, `\Z*`}
+
+	for _, tc := range inValidRegexp {
+		tc := tc
+		t.Run(tc, func(t *testing.T) {
+			_, err := getRegexp(tc)
+			require.Error(t, err)
+		})
+	}
+}
