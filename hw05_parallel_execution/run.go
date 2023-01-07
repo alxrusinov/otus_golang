@@ -5,20 +5,27 @@ import (
 	"sync"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var (
+	ErrErrorsLimitExceeded    = errors.New("errors limit exceeded")
+	ErrErrorsGoroutinesNumber = errors.New("negative or zero number of goroutines ")
+)
 
 type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	if m == 0 {
+	if m <= 0 {
 		return ErrErrorsLimitExceeded
+	}
+
+	if n <= 0 {
+		return ErrErrorsGoroutinesNumber
 	}
 
 	taskChan := make(chan Task, n)
 	errChan := make(chan struct{}, m)
 	cancel := make(chan struct{}, 1)
-	done := make(chan struct{}, 1)
+
 	var hasError error
 
 	var wg sync.WaitGroup
@@ -28,10 +35,11 @@ func Run(tasks []Task, n, m int) error {
 		go func() {
 			defer wg.Done()
 
+		TASK:
 			for task := range taskChan {
 				select {
 				case <-cancel:
-					break
+					break TASK
 				default:
 					if err := task(); err != nil {
 						errChan <- struct{}{}
@@ -58,20 +66,20 @@ func Run(tasks []Task, n, m int) error {
 	}()
 
 LOOP:
-	for i, task := range tasks {
+	for _, task := range tasks {
 		select {
 		case <-cancel:
-			close(taskChan)
 			hasError = ErrErrorsLimitExceeded
 			break LOOP
 		default:
 			taskChan <- task
-			if i == len(tasks)-1 {
-				close(taskChan)
-				close(done)
-				close(errChan)
-			}
 		}
+	}
+
+	close(taskChan)
+
+	if hasError == nil {
+		close(errChan)
 	}
 
 	wg.Wait()
