@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -14,6 +13,7 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrNegativeOffset        = errors.New("negative offset")
 	ErrNegativeLimit         = errors.New("negative limit")
+	ErrPathTheSame           = errors.New("from and to path the same")
 )
 
 func prepareFiles(fromPath, toPath string) (fromFile, toFile *os.File, err error) {
@@ -41,6 +41,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrNegativeLimit
 	}
 
+	if fromPath == toPath {
+		return ErrPathTheSame
+	}
+
 	fromFile, toFile, err := prepareFiles(fromPath, toPath)
 	if err != nil {
 		return err
@@ -49,12 +53,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	defer fromFile.Close()
 	defer toFile.Close()
 
-	readingLimit := limit
-
-	info, errStat := fromFile.Stat()
-
+	info, err := fromFile.Stat()
 	if err != nil {
-		return errStat
+		return err
 	}
 
 	size := info.Size()
@@ -67,6 +68,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
+	readingLimit := limit
+
 	if readingLimit == 0 {
 		readingLimit = size
 	}
@@ -75,23 +78,19 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		readingLimit = size - offset
 	}
 
-	buf := make([]byte, readingLimit)
-	_, errRead := fromFile.ReadAt(buf, offset)
-
-	if errRead != nil && errRead != io.EOF {
-		return errRead
-	}
-
-	bf := bytes.NewReader(buf)
-
-	bar := pb.Full.Start64(readingLimit)
-	barReader := bar.NewProxyReader(bf)
-	defer bar.Finish()
-
-	_, errCopy := io.Copy(toFile, barReader)
+	_, err = fromFile.Seek(offset, 0)
 
 	if err != nil {
-		return errCopy
+		return err
+	}
+
+	bar := pb.Full.Start64(readingLimit)
+	barReader := bar.NewProxyReader(fromFile)
+	defer bar.Finish()
+
+	_, err = io.CopyN(toFile, barReader, readingLimit)
+	if err != nil {
+		return err
 	}
 
 	return nil

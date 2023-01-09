@@ -65,6 +65,14 @@ func TestCopy(t *testing.T) {
 			offset:   0,
 			error:    ErrNegativeLimit,
 		},
+		{
+			name:     "the same paths",
+			fromPath: "input.txt",
+			toPath:   "input.txt",
+			limit:    0,
+			offset:   0,
+			error:    ErrPathTheSame,
+		},
 	}
 
 	for _, tCase := range tc {
