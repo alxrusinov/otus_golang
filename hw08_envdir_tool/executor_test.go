@@ -54,11 +54,7 @@ func TestRunCmd(t *testing.T) {
 		t.Run(tCase.name, func(t *testing.T) {
 			returnCode := RunCmd(tCase.cmd, tCase.env)
 
-			require.Equalf(t,
-				tCase.returnCode, returnCode,
-				"expected returnCode - %v, actual - %v",
-				tCase.returnCode,
-				returnCode)
+			require.Equal(t, tCase.returnCode, returnCode)
 		})
 	}
 }

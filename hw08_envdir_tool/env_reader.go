@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -18,18 +18,10 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
-func prepareValue(value []byte) []string {
-	splinted := bytes.Split(value, []byte("\n"))
-	result := make([]string, len(splinted))
-
-	for i, v := range splinted {
-		replaced := bytes.ReplaceAll(v, []byte{0}, []byte("\n"))
-		trimmed := bytes.TrimRight(replaced, " \t")
-		stringifies := string(trimmed)
-
-		result[i] = stringifies
-	}
-
+func prepareValue(value []byte) string {
+	trimmed := bytes.TrimRight(value, " \t")
+	replaced := bytes.ReplaceAll(trimmed, []byte{0}, []byte("\n"))
+	result := string(replaced)
 	return result
 }
 
@@ -66,17 +58,17 @@ func ReadDir(dir string) (Environment, error) {
 
 		defer file.Close()
 
-		value := make([]byte, info.Size())
+		buf := bufio.NewScanner(file)
 
-		_, err = file.Read(value)
+		buf.Scan()
 
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
+		if scanErr := buf.Err(); scanErr != nil {
+			return scanErr
 		}
 
-		preparedValue := prepareValue(value)
+		value := buf.Bytes()
 
-		envValue.Value = preparedValue[0]
+		envValue.Value = prepareValue(value)
 
 		envs[info.Name()] = envValue
 

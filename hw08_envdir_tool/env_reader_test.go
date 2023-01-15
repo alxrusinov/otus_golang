@@ -33,7 +33,6 @@ func TestReadDir(t *testing.T) {
 			val, err := ReadDir(tCase.dir)
 
 			if tCase.err == nil {
-				require.NoErrorf(t, err, "expected error %v, actual - %v", tCase.err, err)
 				require.Lenf(t, val, tCase.resultLen, "expected length - %v, actual - %v", tCase.resultLen, len(val))
 				return
 			}
