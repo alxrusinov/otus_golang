@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// json не соответсвует правилу json(camel)
+//
+//nolint:tagliatelle
 //easyjson:json
 type User struct {
 	ID       int    `json:"Id"`
