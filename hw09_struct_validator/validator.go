@@ -77,7 +77,7 @@ func (fl *Field) AddValidationError(err ValidationError) {
 }
 
 func (fl *Field) ValidateSlice() error {
-	progErr := false
+	var progErr error
 
 	sliceLen := fl.value.Len()
 	slice := fl.value.Slice(0, sliceLen)
@@ -88,7 +88,7 @@ LOOP:
 		for _, valFn := range fl.validationFn {
 			ok, err := valFn(sliceValue.String())
 			if err != nil {
-				progErr = true
+				progErr = ProgrammingError{Msg: getInvalidValidatorErrorMsg()}
 				break LOOP
 			}
 
@@ -102,15 +102,15 @@ LOOP:
 		}
 	}
 
-	if progErr {
-		return ProgrammingError{Msg: getInvalidValidatorErrorMsg()}
+	if progErr != nil {
+		return progErr
 	}
 
 	return nil
 }
 
 func (fl *Field) ValidatePrimitive() error {
-	progErr := false
+	var progErr error
 
 	for _, valFn := range fl.validationFn {
 		var ok bool
@@ -125,7 +125,7 @@ func (fl *Field) ValidatePrimitive() error {
 		}
 
 		if err != nil {
-			progErr = true
+			progErr = ProgrammingError{Msg: getInvalidValidatorErrorMsg()}
 			break
 		}
 
@@ -137,8 +137,8 @@ func (fl *Field) ValidatePrimitive() error {
 				})
 		}
 	}
-	if progErr {
-		return ProgrammingError{Msg: getInvalidValidatorErrorMsg()}
+	if progErr != nil {
+		return progErr
 	}
 
 	return nil
